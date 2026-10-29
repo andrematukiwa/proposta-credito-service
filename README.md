@@ -59,6 +59,8 @@ dotnet run --project src/PropostaCredito.Api
 dotnet test
 ```
 
+Os testes de unidade cobrem o cálculo do score (fronteiras de renda e idade), a política de crédito (fronteiras 100/101 e 500/501), a geração da proposta e a publicação de `PropostaGerada` para cada faixa, a idempotência e cada tipo de mensagem inválida que vai direto para a DLQ. Repositório, publisher, unit of work e calculadora de score são substituídos por mocks (NSubstitute), e o relógio por `FakeTimeProvider`.
+
 ## Endpoint
 
 | Método | Rota | Descrição | Respostas |
