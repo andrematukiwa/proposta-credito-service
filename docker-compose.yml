@@ -1,0 +1,53 @@
+# Sobe só este serviço, com banco e RabbitMQ próprios.
+# Para o fluxo completo (Cadastro → Proposta → Cartão), use o docker-compose.fluxo-completo.yml
+# do repositório cadastro-clientes-service.
+services:
+  proposta-api:
+    build: .
+    container_name: proposta-api
+    environment:
+      # Development habilita o Swagger e a aplicação automática das migrations
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__PropostaDb: "Host=proposta-postgres;Port=5432;Database=proposta;Username=postgres;Password=postgres"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+    ports:
+      - "8082:8080"
+    depends_on:
+      proposta-postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  proposta-postgres:
+    image: postgres:17-alpine
+    container_name: proposta-postgres
+    environment:
+      POSTGRES_DB: proposta
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - proposta-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d proposta"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    container_name: proposta-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  proposta-pgdata:
